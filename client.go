@@ -448,7 +448,7 @@ func (c *client) sendQuery(msg *dns.Msg) error {
 				wcm.IfIndex = c.ifaces[ifi].Index
 			case "windows":
 				if c.ifaces[ifi].Name == "Teredo Tunneling Pseudo-Interface" {
-					log.Println("Skipping Teredo interface")
+					//log.Println("Skipping Teredo interface on windows")
 				} else {
 					if err := c.ipv4conn.SetMulticastInterface(&c.ifaces[ifi]); err != nil {
 						log.Printf("[WARN] mdns: Failed to set multicast interface %s: %v", c.ifaces[ifi].Name, err)
@@ -473,7 +473,7 @@ func (c *client) sendQuery(msg *dns.Msg) error {
 				wcm.IfIndex = c.ifaces[ifi].Index
 			case "windows":
 				if c.ifaces[ifi].Name == "Teredo Tunneling Pseudo-Interface" {
-					log.Println("Skipping Teredo interface")
+					//log.Println("Skipping Teredo interface on windows")
 				} else {
 					if err := c.ipv4conn.SetMulticastInterface(&c.ifaces[ifi]); err != nil {
 						log.Printf("[WARN] mdns: Failed to set multicast interface %s: %v", c.ifaces[ifi].Name, err)
