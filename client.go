@@ -212,7 +212,7 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					if params.ServiceInstanceName() != "" && params.ServiceInstanceName() != rr.Ptr {
 						continue
 					}
-					if _, ok := entries[rr.Ptr]; !ok {
+					if _, found := entries[rr.Ptr]; !found {
 						entries[rr.Ptr] = newServiceEntry(
 							trimDot(strings.Replace(rr.Ptr, rr.Hdr.Name, "", -1)),
 							params.Service,
@@ -225,7 +225,7 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					} else if !strings.HasSuffix(rr.Hdr.Name, params.ServiceName()) {
 						continue
 					}
-					if _, ok := entries[rr.Hdr.Name]; !ok {
+					if _, found := entries[rr.Hdr.Name]; !found {
 						entries[rr.Hdr.Name] = newServiceEntry(
 							trimDot(strings.Replace(rr.Hdr.Name, params.ServiceName(), "", 1)),
 							params.Service,
@@ -240,7 +240,7 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					} else if !strings.HasSuffix(rr.Hdr.Name, params.ServiceName()) {
 						continue
 					}
-					if _, ok := entries[rr.Hdr.Name]; !ok {
+					if _, found := entries[rr.Hdr.Name]; !found {
 						entries[rr.Hdr.Name] = newServiceEntry(
 							trimDot(strings.Replace(rr.Hdr.Name, params.ServiceName(), "", 1)),
 							params.Service,
@@ -276,9 +276,11 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					delete(sentEntries, k)
 					continue
 				}
-				if _, ok := sentEntries[k]; ok {
+				/* Always pass discovered entries up
+				if _, found := sentEntries[k]; found {
 					continue
 				}
+				*/
 
 				// If this is an DNS-SD query do not throw PTR away.
 				// It is expected to have only PTR for enumeration
