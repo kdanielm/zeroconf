@@ -276,11 +276,9 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					delete(sentEntries, k)
 					continue
 				}
-				/* Always pass discovered entries up
 				if _, found := sentEntries[k]; found {
 					continue
 				}
-				*/
 
 				// If this is an DNS-SD query do not throw PTR away.
 				// It is expected to have only PTR for enumeration
