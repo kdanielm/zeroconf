@@ -445,7 +445,8 @@ func (s *Server) composeBrowsingAnswers(resp *dns.Msg, ifIndex int) {
 			Class:  dns.ClassINET,
 			Ttl:    s.ttl,
 		},
-		Txt: s.service.Text,
+		//Txt: s.service.Text,
+		Txt: s.service.TxtRecords(),
 	}
 	srv := &dns.SRV{
 		Hdr: dns.RR_Header{
@@ -498,7 +499,8 @@ func (s *Server) composeLookupAnswers(resp *dns.Msg, ttl uint32, ifIndex int, fl
 			Class:  dns.ClassINET | qClassCacheFlush,
 			Ttl:    ttl,
 		},
-		Txt: s.service.Text,
+		//Txt: s.service.Text,
+		Txt: s.service.TxtRecords(),
 	}
 	dnssd := &dns.PTR{
 		Hdr: dns.RR_Header{
@@ -576,7 +578,8 @@ func (s *Server) probe() {
 			Class:  dns.ClassINET,
 			Ttl:    s.ttl,
 		},
-		Txt: s.service.Text,
+		//Txt: s.service.Text,
+		Txt: s.service.TxtRecords(),
 	}
 	q.Ns = []dns.RR{srv, txt}
 
