@@ -112,6 +112,17 @@ type ServiceEntry struct {
 	AddrIPv6 []net.IP  `json:"-"`        // Host machine IPv6 address
 }
 
+func (s *ServiceEntry) TxtRecords() []string {
+	var txtRecords []string
+
+	for _, txtRecord := range s.Text {
+		txtChunks := chunks(txtRecord, 255)
+		txtRecords = append(txtRecords, txtChunks...)
+	}
+
+	return txtRecords
+}
+
 // newServiceEntry constructs a ServiceEntry.
 func newServiceEntry(instance, service string, domain string) *ServiceEntry {
 	return &ServiceEntry{

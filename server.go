@@ -643,7 +643,8 @@ func (s *Server) announceText() {
 			Class:  dns.ClassINET | qClassCacheFlush,
 			Ttl:    s.ttl,
 		},
-		Txt: s.service.Text,
+		//Txt: s.service.Text,
+		Txt: s.service.TxtRecords(),
 	}
 
 	resp.Answer = []dns.RR{txt}
