@@ -277,10 +277,13 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					continue
 				}
 
-				/* Looks like this might break sliding TTL and causes records to vanish
-				if _, found := sentEntries[k]; found {
-					continue
-				}
+				/*
+					if entry, found := sentEntries[k]; found {
+						// Only sent entry update if it expires in less than 1 minute
+						if !e.Expiry.After(entry.Expiry.Add(-1 * time.Minute)) {
+							continue
+						}
+					}
 				*/
 
 				// If this is an DNS-SD query do not throw PTR away.
