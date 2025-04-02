@@ -276,9 +276,12 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					delete(sentEntries, k)
 					continue
 				}
+
+				/* Looks like this might break sliding TTL and causes records to vanish
 				if _, found := sentEntries[k]; found {
 					continue
 				}
+				*/
 
 				// If this is an DNS-SD query do not throw PTR away.
 				// It is expected to have only PTR for enumeration
