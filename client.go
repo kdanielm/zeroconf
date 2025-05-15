@@ -120,24 +120,25 @@ func (c *client) run(ctx context.Context, params *lookupParams) error {
 
 	// If previous probe was ok, it should be fine now. In case of an error later on,
 	// the entries' queue is closed.
-	/* Periodic query causes lots of (most probably) unneccessary queries as services will announce themselves and send updates when required
+	// Periodic query causes lots of (most probably) unneccessary queries as services will announce themselves and send updates when required
 	err := c.periodicQuery(ctx, params)
 	cancel()
 	<-done
 	return err
-	*/
 
-	// Do a single query
-	err := c.query(params)
+	/*
+		// Do a single query
+		err := c.query(params)
 
-	if err != nil {
+		if err != nil {
+			cancel()
+			return err
+		}
+
+		<-ctx.Done()
 		cancel()
-		return err
-	}
-
-	<-ctx.Done()
-	cancel()
-	return nil
+		return nil
+	*/
 }
 
 // defaultParams returns a default set of QueryParams.
@@ -394,7 +395,7 @@ func (c *client) periodicQuery(ctx context.Context, params *lookupParams) error 
 		return err
 	}
 
-	const maxInterval = 60 * time.Second
+	const maxInterval = 600 * time.Second
 	interval := initialQueryInterval
 	timer := time.NewTimer(interval)
 	defer timer.Stop()
