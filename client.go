@@ -120,10 +120,24 @@ func (c *client) run(ctx context.Context, params *lookupParams) error {
 
 	// If previous probe was ok, it should be fine now. In case of an error later on,
 	// the entries' queue is closed.
+	/* Periodic query causes lots of (most probably) unneccessary queries as services will announce themselves and send updates when required
 	err := c.periodicQuery(ctx, params)
 	cancel()
 	<-done
 	return err
+	*/
+
+	// Do a single query
+	err := c.query(params)
+
+	if err != nil {
+		cancel()
+		return err
+	}
+
+	<-ctx.Done()
+	cancel()
+	return nil
 }
 
 // defaultParams returns a default set of QueryParams.
@@ -427,6 +441,7 @@ func (c *client) query(params *lookupParams) error {
 		m.Question = []dns.Question{
 			{Name: serviceInstanceName, Qtype: dns.TypeSRV, Qclass: dns.ClassINET},
 			{Name: serviceInstanceName, Qtype: dns.TypeTXT, Qclass: dns.ClassINET},
+			{Name: serviceInstanceName, Qtype: dns.TypeANY, Qclass: dns.ClassINET},
 		}
 	} else if len(params.Subtypes) > 0 { // service subtype browse
 		m.SetQuestion(params.Subtypes[0], dns.TypePTR)
