@@ -395,7 +395,7 @@ func (c *client) periodicQuery(ctx context.Context, params *lookupParams) error 
 		return err
 	}
 
-	const maxInterval = 600 * time.Second
+	const maxInterval = 60 * time.Second
 	interval := initialQueryInterval
 	timer := time.NewTimer(interval)
 	defer timer.Stop()
