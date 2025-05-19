@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -43,12 +44,22 @@ func main() {
 		tc = time.After(time.Second * time.Duration(*waitTime))
 	}
 
-	select {
-	case <-sig:
-		// Exit by user
-	case <-tc:
-		// Exit by timeout
-	}
+	ticker := time.NewTicker(60 * time.Second)
 
-	log.Println("Shutting down.")
+	for {
+		select {
+		case t := <-ticker.C:
+			//Publish new txt record
+			log.Println("Ticker fired")
+			server.SetText([]string{fmt.Sprintf("t=%s", t)})
+		case <-sig:
+			// Exit by user
+			log.Println("Shutting down.")
+			return
+		case <-tc:
+			// Exit by timeout
+			log.Println("Shutting down.")
+			return
+		}
+	}
 }

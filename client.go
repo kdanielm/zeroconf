@@ -121,24 +121,24 @@ func (c *client) run(ctx context.Context, params *lookupParams) error {
 	// If previous probe was ok, it should be fine now. In case of an error later on,
 	// the entries' queue is closed.
 	// Periodic query causes lots of (most probably) unneccessary queries as services will announce themselves and send updates when required
-	err := c.periodicQuery(ctx, params)
-	cancel()
-	<-done
-	return err
-
 	/*
-		// Do a single query
-		err := c.query(params)
-
-		if err != nil {
-			cancel()
-			return err
-		}
-
-		<-ctx.Done()
+		err := c.periodicQuery(ctx, params)
 		cancel()
-		return nil
+		<-done
+		return err
 	*/
+
+	// Do a single query
+	err := c.query(params)
+
+	if err != nil {
+		cancel()
+		return err
+	}
+
+	<-ctx.Done()
+	cancel()
+	return nil
 }
 
 // defaultParams returns a default set of QueryParams.
@@ -219,6 +219,8 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 			sections = append(sections, msg.Extra...)
 
 			for _, answer := range sections {
+				header := answer.Header()
+
 				switch rr := answer.(type) {
 				case *dns.PTR:
 					if params.ServiceName() != rr.Hdr.Name {
@@ -234,6 +236,8 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 							params.Domain)
 					}
 					entries[rr.Ptr].Expiry = now.Add(time.Duration(rr.Hdr.Ttl) * time.Second)
+					// Cache Flush takes most significant bit of class. If that's set class gets 32768 added
+					entries[rr.Ptr].CacheFlush = header.Class > 32768
 				case *dns.SRV:
 					if params.ServiceInstanceName() != "" && params.ServiceInstanceName() != rr.Hdr.Name {
 						continue
@@ -249,6 +253,8 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					entries[rr.Hdr.Name].HostName = rr.Target
 					entries[rr.Hdr.Name].Port = int(rr.Port)
 					entries[rr.Hdr.Name].Expiry = now.Add(time.Duration(rr.Hdr.Ttl) * time.Second)
+					// Cache Flush takes most significant bit of class. If that's set class gets 32768 added
+					entries[rr.Hdr.Name].CacheFlush = header.Class > 32768
 				case *dns.TXT:
 					if params.ServiceInstanceName() != "" && params.ServiceInstanceName() != rr.Hdr.Name {
 						continue
@@ -263,6 +269,8 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					}
 					entries[rr.Hdr.Name].Text = rr.Txt
 					entries[rr.Hdr.Name].Expiry = now.Add(time.Duration(rr.Hdr.Ttl) * time.Second)
+					// Cache Flush takes most significant bit of class. If that's set class gets 32768 added
+					entries[rr.Hdr.Name].CacheFlush = header.Class > 32768
 				}
 			}
 			// Associate IPs in a second round as other fields should be filled by now.
@@ -292,24 +300,24 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 					continue
 				}
 
+				if entry, found := sentEntries[k]; found {
+					// Only sent entry update if it expires in less than 1 minute
+					if !e.Expiry.After(entry.Expiry.Add(-1*time.Minute)) && !e.CacheFlush {
+						continue
+					}
+				}
+
+				// If this is an DNS-SD query do not throw PTR away.
+				// It is expected to have only PTR for enumeration
 				/*
-					if entry, found := sentEntries[k]; found {
-						// Only sent entry update if it expires in less than 1 minute
-						if !e.Expiry.After(entry.Expiry.Add(-1 * time.Minute)) {
+					if params.ServiceRecord.ServiceTypeName() != params.ServiceRecord.ServiceName() {
+						// Require at least one resolved IP address for ServiceEntry
+						// TODO: wait some more time as chances are high both will arrive.
+						if len(e.AddrIPv4) == 0 && len(e.AddrIPv6) == 0 {
 							continue
 						}
 					}
 				*/
-
-				// If this is an DNS-SD query do not throw PTR away.
-				// It is expected to have only PTR for enumeration
-				if params.ServiceRecord.ServiceTypeName() != params.ServiceRecord.ServiceName() {
-					// Require at least one resolved IP address for ServiceEntry
-					// TODO: wait some more time as chances are high both will arrive.
-					if len(e.AddrIPv4) == 0 && len(e.AddrIPv6) == 0 {
-						continue
-					}
-				}
 				// Submit entry to subscriber and cache it.
 				// This is also a point to possibly stop probing actively for a
 				// service entry.
@@ -378,6 +386,7 @@ func (c *client) recv(ctx context.Context, l interface{}, msgCh chan *dns.Msg) {
 		select {
 		case msgCh <- msg:
 			// Submit decoded DNS message and continue.
+			//log.Printf("New msg sent to channel: %v\n", msg)
 		case <-ctx.Done():
 			// Abort.
 			return
