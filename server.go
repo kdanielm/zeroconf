@@ -639,18 +639,22 @@ func (s *Server) announceText() {
 	resp := new(dns.Msg)
 	resp.MsgHdr.Response = true
 
-	txt := &dns.TXT{
-		Hdr: dns.RR_Header{
-			Name:   s.service.ServiceInstanceName(),
-			Rrtype: dns.TypeTXT,
-			Class:  dns.ClassINET | qClassCacheFlush,
-			Ttl:    s.ttl,
-		},
-		//Txt: s.service.Text,
-		Txt: s.service.TxtRecords(),
-	}
+	/*
+		txt := &dns.TXT{
+			Hdr: dns.RR_Header{
+				Name:   s.service.ServiceInstanceName(),
+				Rrtype: dns.TypeTXT,
+				Class:  dns.ClassINET | qClassCacheFlush,
+				Ttl:    s.ttl,
+			},
+			//Txt: s.service.Text,
+			Txt: s.service.TxtRecords(),
+		}
 
-	resp.Answer = s.appendAddrs([]dns.RR{txt}, s.ttl, 0, true)
+		resp.Answer = s.appendAddrs([]dns.RR{txt}, s.ttl, 0, true)
+	*/
+
+	s.composeBrowsingAnswers(resp, 0)
 
 	s.multicastResponse(resp, 0)
 }
