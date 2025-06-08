@@ -650,7 +650,8 @@ func (s *Server) announceText() {
 		Txt: s.service.TxtRecords(),
 	}
 
-	resp.Answer = []dns.RR{txt}
+	resp.Answer = s.appendAddrs([]dns.RR{txt}, s.ttl, 0, true)
+
 	s.multicastResponse(resp, 0)
 }
 
